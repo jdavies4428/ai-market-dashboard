@@ -1,9 +1,13 @@
-import { TickerData, IndexData, MarketData, SectorPerformance, NewsItem } from "./types";
+import { TickerData, IndexData, MarketData, SectorPerformance, NewsItem, QuoteData, LiveQuotesResponse } from "./types";
 import { WATCHLIST, INDICES, SMA_PERIODS, SECTORS } from "./constants";
 
 interface YahooChartResult {
   chart: {
     result: Array<{
+      meta: {
+        regularMarketPrice: number;
+        chartPreviousClose: number;
+      };
       timestamp: number[];
       indicators: {
         quote: Array<{
@@ -36,7 +40,7 @@ async function fetchYahooChart(symbol: string): Promise<YahooChartResult | null>
       headers: {
         "User-Agent": "Mozilla/5.0",
       },
-      next: { revalidate: 60 },
+      next: { revalidate: 300 },
     });
     if (!res.ok) return null;
     return await res.json();
@@ -56,8 +60,9 @@ function parseTickerData(data: YahooChartResult): TickerData | null {
 
   if (prices.length < 2) return null;
 
-  const latest = prices[prices.length - 1];
-  const prev = prices[prices.length - 2];
+  // Use live price from meta when available, fall back to last daily close
+  const latest = result.meta?.regularMarketPrice ?? prices[prices.length - 1];
+  const prev = result.meta?.chartPreviousClose ?? prices[prices.length - 2];
   const change = latest - prev;
   const changePct = (change / prev) * 100;
 
@@ -126,8 +131,8 @@ function parseIndexData(data: YahooChartResult, name: string): IndexData | null 
 
   if (prices.length < 2) return null;
 
-  const latest = prices[prices.length - 1];
-  const prev = prices[prices.length - 2];
+  const latest = result.meta?.regularMarketPrice ?? prices[prices.length - 1];
+  const prev = result.meta?.chartPreviousClose ?? prices[prices.length - 2];
   const change = latest - prev;
   const changePct = (change / prev) * 100;
 
@@ -287,4 +292,58 @@ export async function fetchAllMarketData(): Promise<MarketData> {
   data.news = await fetchNews();
 
   return data;
+}
+
+// --- Live quotes (lightweight, for frequent polling) ---
+
+async function fetchQuoteChart(symbol: string): Promise<YahooChartResult | null> {
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      next: { revalidate: 15 },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    console.error(`Error fetching quote for ${symbol}:`, e);
+    return null;
+  }
+}
+
+export async function fetchLiveQuotes(): Promise<LiveQuotesResponse> {
+  const response: LiveQuotesResponse = {
+    timestamp: new Date().toISOString(),
+    indices: {},
+    watchlist: {},
+  };
+
+  const allSymbols = [...Object.keys(INDICES), ...WATCHLIST];
+  const BATCH_SIZE = 20;
+
+  for (let i = 0; i < allSymbols.length; i += BATCH_SIZE) {
+    const batch = allSymbols.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(
+      batch.map((symbol) => fetchQuoteChart(symbol))
+    );
+    batch.forEach((symbol, idx) => {
+      const data = results[idx];
+      const meta = data?.chart?.result?.[0]?.meta;
+      if (!meta?.regularMarketPrice || !meta?.chartPreviousClose) return;
+
+      const price = Math.round(meta.regularMarketPrice * 100) / 100;
+      const change = Math.round((meta.regularMarketPrice - meta.chartPreviousClose) * 100) / 100;
+      const changePct = Math.round(((meta.regularMarketPrice - meta.chartPreviousClose) / meta.chartPreviousClose * 100) * 100) / 100;
+
+      const quote: QuoteData = { price, change, changePct };
+
+      if (symbol in INDICES) {
+        response.indices[symbol.replace("^", "")] = quote;
+      } else {
+        response.watchlist[symbol] = quote;
+      }
+    });
+  }
+
+  return response;
 }

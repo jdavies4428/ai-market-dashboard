@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { fetchAllMarketData } from "@/lib/yahoo-finance";
 
-// Cache the data in memory for 60 seconds
+// Cache the data in memory for 5 minutes (historical data changes slowly)
 let cachedData: { data: Awaited<ReturnType<typeof fetchAllMarketData>>; ts: number } | null = null;
-const CACHE_TTL = 60_000; // 60 seconds
+const CACHE_TTL = 300_000; // 5 minutes
 
 export async function GET() {
   const now = Date.now();

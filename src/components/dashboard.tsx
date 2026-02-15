@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { MarketData, TickerData } from "@/lib/types";
+import { MarketData, TickerData, MoverData, SectorPerformance, LiveQuotesResponse } from "@/lib/types";
 import { SECTORS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { IndicesBar } from "./indices-bar";
@@ -48,11 +48,94 @@ export function Dashboard() {
     }
   }, []);
 
+  const fetchQuotes = useCallback(async () => {
+    try {
+      const res = await fetch("/api/quotes");
+      if (!res.ok) return;
+      const quotes: LiveQuotesResponse = await res.json();
+
+      setData((prev) => {
+        if (!prev) return prev;
+
+        const newWatchlist = { ...prev.watchlist };
+        for (const [sym, q] of Object.entries(quotes.watchlist)) {
+          if (newWatchlist[sym]) {
+            newWatchlist[sym] = { ...newWatchlist[sym], ...q };
+          }
+        }
+
+        const newIndices = { ...prev.indices };
+        for (const [sym, q] of Object.entries(quotes.indices)) {
+          if (newIndices[sym]) {
+            newIndices[sym] = { ...newIndices[sym], ...q };
+          }
+        }
+
+        // Recompute movers from updated changePct
+        const newMovers: MoverData[] = [];
+        for (const [sym, t] of Object.entries(newWatchlist)) {
+          if (Math.abs(t.changePct) >= 3) {
+            newMovers.push({
+              symbol: sym,
+              price: t.price,
+              changePct: t.changePct,
+              direction: t.changePct > 0 ? "up" : "down",
+            });
+          }
+        }
+        newMovers.sort((a, b) => Math.abs(b.changePct) - Math.abs(a.changePct));
+
+        // Recompute sector performance
+        const newSectorPerf = SECTORS.map((sector): SectorPerformance => {
+          const tickers = sector.tickers
+            .map((s) => ({ symbol: s, data: newWatchlist[s] }))
+            .filter((t) => t.data);
+          if (tickers.length === 0) {
+            return { name: sector.name, avgChangePct: 0, bestName: "", bestChangePct: 0, worstName: "", worstChangePct: 0 };
+          }
+          const avgChangePct = tickers.reduce((sum, t) => sum + t.data.changePct, 0) / tickers.length;
+          const sorted = [...tickers].sort((a, b) => b.data.changePct - a.data.changePct);
+          return {
+            name: sector.name,
+            avgChangePct: Math.round(avgChangePct * 100) / 100,
+            bestName: sorted[0].symbol,
+            bestChangePct: sorted[0].data.changePct,
+            worstName: sorted[sorted.length - 1].symbol,
+            worstChangePct: sorted[sorted.length - 1].data.changePct,
+          };
+        }).sort((a, b) => b.avgChangePct - a.avgChangePct);
+
+        return {
+          ...prev,
+          timestamp: quotes.timestamp,
+          watchlist: newWatchlist,
+          indices: newIndices,
+          movers: newMovers,
+          sectorPerformance: newSectorPerf,
+        };
+      });
+
+      setLastUpdated(new Date().toLocaleTimeString());
+    } catch (e) {
+      console.error("Quote fetch error:", e);
+    }
+  }, []);
+
   useEffect(() => {
     fetchData();
-    const interval = setInterval(() => fetchData(), 60_000);
+    // Full refresh every 5 min, live quotes every 15s
+    let tickCount = 0;
+    const interval = setInterval(() => {
+      tickCount++;
+      if (tickCount >= 20) {
+        tickCount = 0;
+        fetchData();
+      } else {
+        fetchQuotes();
+      }
+    }, 15_000);
     return () => clearInterval(interval);
-  }, [fetchData]);
+  }, [fetchData, fetchQuotes]);
 
   const sectorData = useMemo(() => {
     if (!data) return [];
@@ -223,7 +306,7 @@ export function Dashboard() {
 
           <footer className="border-t border-zinc-800 px-3 py-3 sm:px-6">
             <p className="text-[10px] text-zinc-600">
-              Data from Yahoo Finance. Auto-refreshes every 60s. Not financial advice.
+              Data from Yahoo Finance. Prices refresh every 15s. Not financial advice.
             </p>
           </footer>
         </div>

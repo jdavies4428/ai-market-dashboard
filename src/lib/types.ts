@@ -47,6 +47,18 @@ export interface MarketData {
   news: NewsItem[];
 }
 
+export interface QuoteData {
+  price: number;
+  change: number;
+  changePct: number;
+}
+
+export interface LiveQuotesResponse {
+  timestamp: string;
+  indices: Record<string, QuoteData>;
+  watchlist: Record<string, QuoteData>;
+}
+
 export interface SectorConfig {
   name: string;
   tickers: string[];
