@@ -6,7 +6,6 @@ interface YahooChartResult {
     result: Array<{
       meta: {
         regularMarketPrice: number;
-        chartPreviousClose: number;
       };
       timestamp: number[];
       indicators: {
@@ -62,7 +61,9 @@ function parseTickerData(data: YahooChartResult): TickerData | null {
 
   // Use live price from meta when available, fall back to last daily close
   const latest = result.meta?.regularMarketPrice ?? prices[prices.length - 1];
-  const prev = result.meta?.chartPreviousClose ?? prices[prices.length - 2];
+  // Previous close is always the second-to-last daily close (yesterday's close)
+  // NOT chartPreviousClose, which is the close before the chart range start
+  const prev = prices[prices.length - 2];
   const change = latest - prev;
   const changePct = (change / prev) * 100;
 
@@ -132,7 +133,7 @@ function parseIndexData(data: YahooChartResult, name: string): IndexData | null 
   if (prices.length < 2) return null;
 
   const latest = result.meta?.regularMarketPrice ?? prices[prices.length - 1];
-  const prev = result.meta?.chartPreviousClose ?? prices[prices.length - 2];
+  const prev = prices[prices.length - 2];
   const change = latest - prev;
   const changePct = (change / prev) * 100;
 
@@ -327,15 +328,24 @@ export async function fetchLiveQuotes(): Promise<LiveQuotesResponse> {
       batch.map((symbol) => fetchQuoteChart(symbol))
     );
     batch.forEach((symbol, idx) => {
-      const data = results[idx];
-      const meta = data?.chart?.result?.[0]?.meta;
-      if (!meta?.regularMarketPrice || !meta?.chartPreviousClose) return;
+      const chartData = results[idx];
+      const result = chartData?.chart?.result?.[0];
+      if (!result?.meta?.regularMarketPrice) return;
 
-      const price = Math.round(meta.regularMarketPrice * 100) / 100;
-      const change = Math.round((meta.regularMarketPrice - meta.chartPreviousClose) * 100) / 100;
-      const changePct = Math.round(((meta.regularMarketPrice - meta.chartPreviousClose) / meta.chartPreviousClose * 100) * 100) / 100;
+      const closes = result.indicators.quote[0].close;
+      const validCloses = closes.filter((p): p is number => p !== null);
+      if (validCloses.length < 2) return;
 
-      const quote: QuoteData = { price, change, changePct };
+      const price = result.meta.regularMarketPrice;
+      const prevClose = validCloses[validCloses.length - 2]; // yesterday's close
+      const change = price - prevClose;
+      const changePct = (change / prevClose) * 100;
+
+      const quote: QuoteData = {
+        price: Math.round(price * 100) / 100,
+        change: Math.round(change * 100) / 100,
+        changePct: Math.round(changePct * 100) / 100,
+      };
 
       if (symbol in INDICES) {
         response.indices[symbol.replace("^", "")] = quote;
