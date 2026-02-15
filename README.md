@@ -1,57 +1,66 @@
 # AI Market Dashboard
 
-A real-time AI-focused market dashboard for tracking your watchlist.
+A real-time market dashboard for tracking AI infrastructure and semiconductor stocks, built with Next.js.
 
 ## Features
 
-- **Major Indices**: Dow, S&P 500, Nasdaq, Russell 2000, VIX, Bitcoin
-- **Watchlist**: 17 tickers with real-time prices
-- **Big Movers**: Highlights stocks moving >3%
-- **Auto-refresh**: Updates every 60 seconds
+- **Market Indices** — S&P 500, Dow Jones, Nasdaq, Bitcoin at a glance
+- **38-Stock Watchlist** — Organized by sector: Hyperscalers, Chips, Memory, Networking, Optical, Neoclouds, Servers, Power
+- **SMA Indicators** — Visual arrows for 5/10/20/50/100/200-day SMAs with opacity-scaled intensity
+- **Performance Returns** — Daily change, 1-week, 1-month, and YTD returns
+- **Big Movers** — Highlights stocks moving >3% in a session
+- **Auto-refresh** — Updates every 60 seconds with server-side caching
+- **Dark Mode** — Clean, dark terminal-inspired UI
 
-## Deployment
+## Tech Stack
 
-### Option 1: Vercel (Recommended)
+- **Next.js 16** (App Router, TypeScript)
+- **Tailwind CSS v4**
+- **Yahoo Finance API** (server-side, no CORS proxy needed)
 
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-cd market-dashboard
-vercel --prod
-```
-
-### Option 2: Local Development
+## Getting Started
 
 ```bash
 # Install dependencies
-pip install -r requirements.txt
+npm install
 
 # Run locally
-python app.py
+npm run dev
 
-# Open http://localhost:5000
+# Open http://localhost:3000
 ```
 
-### Option 3: Docker
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── api/market/route.ts   # Yahoo Finance API proxy
+│   ├── globals.css            # Global styles
+│   ├── layout.tsx             # Root layout
+│   └── page.tsx               # Dashboard page
+├── components/
+│   ├── dashboard.tsx          # Main dashboard container
+│   ├── indices-bar.tsx        # Market indices ticker bar
+│   ├── movers-bar.tsx         # Big movers highlight bar
+│   ├── sector-table.tsx       # Sector watchlist table
+│   └── sma-arrow.tsx          # SMA indicator arrow
+└── lib/
+    ├── constants.ts           # Watchlist, sectors, config
+    ├── types.ts               # TypeScript interfaces
+    ├── utils.ts               # Formatting helpers
+    └── yahoo-finance.ts       # Yahoo Finance data fetcher
+```
+
+## Deployment
+
+Deploy to Vercel:
 
 ```bash
-# Build image
-docker build -t market-dashboard .
-
-# Run
-docker run -p 5000:5000 market-dashboard
+npm i -g vercel
+vercel --prod
 ```
-
-## Environment Variables
-
-- `PORT`: Server port (default: 5000)
 
 ## Data Source
 
-All market data is fetched from Yahoo Finance via the `yfinance` library.
-
-## Watchlist
-
-APP, IREN, NBIS, MU, SNDK, NVDA, AMD, LITE, CRWV, ORCL, PSIX, INTC, COHR, WDC, STX, CIFR, AVGO
+All market data is fetched server-side from Yahoo Finance. Data is cached for 60 seconds to avoid rate limiting.
