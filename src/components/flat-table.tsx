@@ -53,7 +53,7 @@ export function FlatTable({ tickers, sortField, sortAsc, onToggleSort }: FlatTab
   return (
     <div>
       <div className="overflow-x-auto">
-        <table className="w-full table-fixed text-xs">
+        <table className="w-full min-w-[900px] table-fixed text-xs">
           <colgroup>
             <col className="w-[7%]" />
             <col className="w-[9%]" />

@@ -12,7 +12,7 @@ export const MoversBar = memo(function MoversBar({ movers }: MoversBarProps) {
   if (movers.length === 0) return null;
 
   return (
-    <div className="border-b border-zinc-800 bg-zinc-900/30 px-6 py-2.5">
+    <div className="border-b border-zinc-800 bg-zinc-900/30 px-3 py-2 sm:px-6 sm:py-2.5">
       <div className="flex items-center gap-4 overflow-x-auto">
         <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-amber-500">
           Big Movers

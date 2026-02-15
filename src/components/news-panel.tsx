@@ -17,13 +17,13 @@ function timeAgo(isoDate: string): string {
 
 export function NewsPanel({ news }: NewsPanelProps) {
   return (
-    <aside className="flex h-full flex-col border-l border-zinc-800 bg-zinc-950">
-      <div className="border-b border-zinc-800 px-4 py-3">
+    <aside className="flex flex-col border-t border-zinc-800 bg-zinc-950 lg:h-full lg:border-l lg:border-t-0">
+      <div className="border-b border-zinc-800 px-3 py-2 sm:px-4 sm:py-3">
         <h2 className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
           News
         </h2>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="lg:flex-1 lg:overflow-y-auto">
         {news.length === 0 ? (
           <p className="px-4 py-6 text-center text-[11px] text-zinc-600">
             No news in the last 24h

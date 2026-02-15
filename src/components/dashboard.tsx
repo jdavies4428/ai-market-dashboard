@@ -126,24 +126,39 @@ export function Dashboard() {
       {/* Main content area */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* Header */}
-        <header className="shrink-0 border-b border-zinc-800 bg-zinc-950 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-bold tracking-tight text-zinc-100">
-                AI Market Dashboard
-              </h1>
-              <p className="text-[11px] text-zinc-500">
-                Real-time AI infrastructure & semiconductor tracking
-              </p>
+        <header className="shrink-0 border-b border-zinc-800 bg-zinc-950 px-3 py-3 sm:px-6 sm:py-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
+            <div className="flex items-center justify-between sm:block">
+              <div>
+                <h1 className="text-base font-bold tracking-tight text-zinc-100 sm:text-lg">
+                  AI Market Dashboard
+                </h1>
+                <p className="hidden text-[11px] text-zinc-500 sm:block">
+                  Real-time AI infrastructure & semiconductor tracking
+                </p>
+              </div>
+              <button
+                onClick={() => fetchData(true)}
+                disabled={refreshing}
+                className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-all hover:border-zinc-700 hover:text-zinc-200 disabled:opacity-50 sm:hidden"
+              >
+                {refreshing ? (
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-3 w-3 animate-spin rounded-full border border-zinc-600 border-t-zinc-300" />
+                  </span>
+                ) : (
+                  "Refresh"
+                )}
+              </button>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="flex items-center overflow-hidden rounded-lg border border-zinc-800">
                 {VIEW_BUTTONS.map((btn) => (
                   <button
                     key={btn.key}
                     onClick={() => handleViewClick(btn.key)}
                     className={cn(
-                      "px-2.5 py-1.5 text-[11px] font-medium transition-colors",
+                      "px-2 py-1.5 text-[11px] font-medium transition-colors sm:px-2.5",
                       viewMode === btn.key
                         ? "bg-zinc-700 text-zinc-100"
                         : "bg-zinc-900 text-zinc-500 hover:text-zinc-300"
@@ -154,14 +169,14 @@ export function Dashboard() {
                 ))}
               </div>
               {lastUpdated && (
-                <span className="text-[11px] text-zinc-600">
+                <span className="hidden text-[11px] text-zinc-600 sm:inline">
                   {lastUpdated}
                 </span>
               )}
               <button
                 onClick={() => fetchData(true)}
                 disabled={refreshing}
-                className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-all hover:border-zinc-700 hover:text-zinc-200 disabled:opacity-50"
+                className="hidden rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-all hover:border-zinc-700 hover:text-zinc-200 disabled:opacity-50 sm:inline-flex"
               >
                 {refreshing ? (
                   <span className="flex items-center gap-1.5">
@@ -201,7 +216,12 @@ export function Dashboard() {
             )}
           </main>
 
-          <footer className="border-t border-zinc-800 px-6 py-3">
+          {/* News — inline on mobile, hidden on desktop (shown in sidebar) */}
+          <div className="lg:hidden">
+            <NewsPanel news={data.news || []} />
+          </div>
+
+          <footer className="border-t border-zinc-800 px-3 py-3 sm:px-6">
             <p className="text-[10px] text-zinc-600">
               Data from Yahoo Finance. Auto-refreshes every 60s. Not financial advice.
             </p>
@@ -209,7 +229,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* News sidebar */}
+      {/* News sidebar — desktop only */}
       <div className="hidden w-80 shrink-0 lg:block">
         <NewsPanel news={data.news || []} />
       </div>

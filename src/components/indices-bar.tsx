@@ -18,7 +18,7 @@ interface IndicesBarProps {
 
 export const IndicesBar = memo(function IndicesBar({ indices }: IndicesBarProps) {
   return (
-    <div className="flex items-center gap-6 overflow-x-auto border-b border-zinc-800 bg-zinc-900/50 px-6 py-3">
+    <div className="flex items-center gap-3 overflow-x-auto border-b border-zinc-800 bg-zinc-900/50 px-3 py-2 sm:gap-6 sm:px-6 sm:py-3">
       {INDEX_ORDER.map((key) => {
         const data = indices[key];
         if (!data) return null;

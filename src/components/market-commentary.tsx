@@ -29,7 +29,7 @@ export function MarketCommentary({
   const bottomName = [...allNames].sort((a, b) => a.pct - b.pct)[0];
 
   return (
-    <div className="border-b border-zinc-800 bg-zinc-900/40 px-6 py-2.5">
+    <div className="border-b border-zinc-800 bg-zinc-900/40 px-3 py-2 sm:px-6 sm:py-2.5">
       <div className="flex flex-col gap-1 text-[11px] leading-relaxed">
         {outperformers.length > 0 && (
           <p>
