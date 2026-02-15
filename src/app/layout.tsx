@@ -15,6 +15,21 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AI Market Dashboard",
   description: "Real-time AI infrastructure & semiconductor market tracking",
+  metadataBase: new URL(
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "http://localhost:3000"
+  ),
+  openGraph: {
+    title: "AI Market Dashboard",
+    description: "Real-time AI infrastructure & semiconductor market tracking",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AI Market Dashboard",
+    description: "Real-time AI infrastructure & semiconductor market tracking",
+  },
 };
 
 export default function RootLayout({
