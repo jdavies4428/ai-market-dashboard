@@ -9,12 +9,14 @@ import { MoversBar } from "./movers-bar";
 import { SectorTable } from "./sector-table";
 import { MarketCommentary } from "./market-commentary";
 import { FlatTable, SortField } from "./flat-table";
+import { HeatmapView } from "./heatmap-view";
 import { NewsPanel } from "./news-panel";
 
-type ViewMode = "subsector" | SortField;
+type ViewMode = "subsector" | "heatmap" | SortField;
 
 const VIEW_BUTTONS: { key: ViewMode; label: string }[] = [
   { key: "subsector", label: "Subsector" },
+  { key: "heatmap", label: "Heatmap" },
   { key: "1d", label: "1D%" },
   { key: "1w", label: "1W%" },
   { key: "1m", label: "1M%" },
@@ -155,8 +157,8 @@ export function Dashboard() {
   }, [data]);
 
   const handleViewClick = useCallback((key: ViewMode) => {
-    if (key === "subsector") {
-      setViewMode("subsector");
+    if (key === "subsector" || key === "heatmap") {
+      setViewMode(key);
       setSortAsc(false);
     } else if (key === viewMode) {
       setSortAsc((prev) => !prev);
@@ -289,6 +291,8 @@ export function Dashboard() {
                   tickers={sector.tickers}
                 />
               ))
+            ) : viewMode === "heatmap" ? (
+              <HeatmapView watchlist={data.watchlist} />
             ) : (
               <FlatTable
                 tickers={allTickers}

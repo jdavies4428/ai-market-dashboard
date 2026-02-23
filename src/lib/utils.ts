@@ -39,3 +39,21 @@ export function changeColor(value: number | null | undefined): string {
   if (value === null || value === undefined || value === 0) return "text-zinc-400";
   return value > 0 ? "text-emerald-500" : "text-red-500";
 }
+
+export function formatMarketCap(num: number | null | undefined): string {
+  if (num === null || num === undefined) return "-";
+
+  const trillion = 1_000_000_000_000;
+  const billion = 1_000_000_000;
+  const million = 1_000_000;
+
+  if (num >= trillion) {
+    return `$${(num / trillion).toFixed(2)}T`;
+  } else if (num >= billion) {
+    return `$${(num / billion).toFixed(2)}B`;
+  } else if (num >= million) {
+    return `$${(num / million).toFixed(2)}M`;
+  } else {
+    return `$${num.toLocaleString("en-US")}`;
+  }
+}
